@@ -14,7 +14,7 @@ import (
 )
 
 func getExcelDocumentRows(worksheet string) [][]string {
-	XLSXLocation := "Movies_small.xlsx"
+	XLSXLocation := "Movies.xlsx"
 
 	// open XLSX document
 	xlsx, err := excelize.OpenFile(XLSXLocation)
@@ -100,7 +100,7 @@ func saveWatchlistAsJSON(column int) {
 	updateJSONFile(file, movies)
 }
 
-func saveMoviesWatchedAsJSON() {
+func saveMoviesWatchedAsJSON(start int) {
 	var apiError models.Error
 
 	rows := getExcelDocumentRows("movie ratings")
@@ -108,23 +108,23 @@ func saveMoviesWatchedAsJSON() {
 	file, movies := openJSONFile("watched.json")
 	defer file.Close()
 
-	for row := range movieSlice {
+	for i := start; i < start+50; i++ {
 		// build OMDB query
-		title := strings.Replace(movieSlice[row], " ", "+", -1)
+		title := strings.Replace(movieSlice[i], " ", "+", -1)
 		queryURL := fmt.Sprintf("%st=%s&type=movie", baseURL, title)
 
 		// call OMDB API
 		movieBytes := getMovieOMDBData(queryURL, title)
 		json.Unmarshal(movieBytes, &apiError)
 		if apiError.Response == "True" {
-			fmt.Printf("Adding movie: %s\n", movieSlice[row])
+			fmt.Printf("Adding movie: %s\n", movieSlice[i])
 
 			var movie models.Movie
 			json.Unmarshal(movieBytes, &movie)
 
 			movies = append(movies, movie)
 		} else {
-			fmt.Printf("Error occurred during OMDB request for movie: %s\n", movieSlice[row])
+			fmt.Printf("Error occurred during OMDB request for movie: %s\n", movieSlice[i])
 		}
 	}
 
